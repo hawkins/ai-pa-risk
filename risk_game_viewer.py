@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageTk
-import PngImagePlugin #for py2exe
+from PIL import PngImagePlugin #for py2exe
 import Tkinter
 import tkSimpleDialog
 import tkFileDialog
