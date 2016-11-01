@@ -1,6 +1,5 @@
-import gui.riskengine
-import gui.riskgui
 import random
+import gui.riskengine as riskengine
 from gui.aihelper import *
 from gui.turbohelper import *
 

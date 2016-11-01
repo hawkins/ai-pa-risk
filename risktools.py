@@ -1,5 +1,5 @@
 import gui.riskgui
-import gui.riskengine
+import gui.riskengine as riskengine
 import random
 import zipfile
 import xml.dom.minidom

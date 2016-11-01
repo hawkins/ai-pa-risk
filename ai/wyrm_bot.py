@@ -1,6 +1,5 @@
 from __future__ import division
-import gui.riskengine
-import gui.riskgui
+import gui.riskengine as riskengine
 import random
 from gui.aihelper import *
 from gui.turbohelper import *
