@@ -1,6 +1,8 @@
 #Play some ai's against each other in a game
 import sys
 import imp
+import traceback
+
 import risktools
 import time
 import os
@@ -126,11 +128,12 @@ def play_game(player_names, ai_players, ai_files, stats, save_logfile, verbose=F
         #Ask the current player what to do
         try:
             current_action = current_ai.getAction(ai_state, time_left[state.players[state.current_player].name])
-        except:
+        except Exception as e:
             #Catch errors and count this as a loss for the player
             time_left[current_player_name] = -1.0
-            print 'There was an error for player: ', current_player_name, '  THEY LOSE!'
-        
+            traceback.print_exc(file=sys.stdout)
+            print 'There was an error for player: ', current_player_name, 'THEY LOSE!'
+
         
         #Keep track of turns (when the player changes)
         if current_player_name != last_player_name:

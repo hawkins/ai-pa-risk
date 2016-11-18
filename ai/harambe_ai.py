@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 from risktools import *
 
 
@@ -6,68 +7,90 @@ from risktools import *
 def getAction(state, time_left=None):
     """This is the main AI function.  It should return a valid AI action for this state."""
 
-    # if time_left is not None:
-    # Decide how much time to spend on this decision
+    continent_scores = {"N. America": 0, "S. America": 3, "Africa": 0, "Europe": 0, "Asia": 0, "Australia": 3}
 
     # Get the possible actions in this state
     actions = getAllowedActions(state)
 
-    print('Heuristic AI : Player', state.players[state.current_player].name, 'considering', len(actions), 'actions')
-
-    # To keep track of the best action we find
-    best_action = None
-    best_action_value = None
+    # To keep track of the best actions we find
+    scored_actions = []
 
     # Evaluate each action
-    for i, action in enumerate(actions):
-        print(' ' + action.to_string())
+    for action in actions:
+        action_value = 0.0
 
-        # Simulate the action, get all possible successors
-        successors, probabilities = simulateAction(state, action)
+        if state.turn_type == "PreAssign":
+            continent = get_target_continent(action, state)
+            action_value += continent_scores[continent.name]
+            for neighbor in get_neighbors(state.board, action.to_territory):
+                if get_continent_from_territory_ID(neighbor) != continent.name:
+                    # This territory has a neighbor that is in another continent
+                    action_value += 0.5
 
-        # Compute the expected heuristic value of the successors
-        current_action_value = 0.0
+        elif state.turn_type == "PrePlace":
+            continent = get_target_continent(action, state)
+            action_value += continent_scores[continent.name]
+            for neighbor in get_neighbors(state.board, action.to_territory):
+                if get_continent_from_territory_ID(neighbor) != continent.name:
+                    # This territory has a neighbor that is in another continent
+                    action_value += 0.5
 
-        for successor, probability in zip(successors, probabilities):
-            # Each successor contributes its heuristic value * its probability to this action's value
-            current_action_value += (heuristic(successor) * probability)
-            print('  ' + str(current_action_value))
+        elif state.turn_type == "Place":
+            for neighbor in get_neighbors(state.board, action.to_territory):
+                if state.owners[neighbor] != state.owners[get_territory(state.board, action.to_territory)]:
+                    action_value += 0.5
 
-        # Store this as the best action if it is the first or better than what we have found
-        if best_action_value is None or current_action_value > best_action_value:
-            best_action = action
-            best_action_value = current_action_value
+        elif state.turn_type == "TurnInCards":
+            pass
 
+        elif state.turn_type == "Attack":
+            # Simulate the action, get all possible successors
+            successors, probabilities = simulateAction(state, action)
+            for successor, probability in zip(successors, probabilities):
+                # Each successor contributes its heuristic value * its probability to this action's value
+                action_value += getReinforcementNum(successor, action.from_territory)
+
+        elif state.turn_type == "Occupy":
+            pass
+
+        elif state.turn_type == "Fortify":
+            pass
+
+        else:
+            print("NOT A VALID STATE")
+
+        scored_actions.append((action_value, action))
     # Return the best action
-    return best_action
+    return max(scored_actions)[1]
 
 
-def heuristic(state):
-    """Returns a number telling how good this state is"""
-    # (PreAssign, PrePlace, Place, TurnInCards, Attack, Occupy, Fortify, GameOver)
-    if state.turn_type == "PreAssign":
-        return 0
-
-    elif state.turn_type == "PrePlace":
-        return 0
-
-    elif state.turn_type == "Place":
-        return 0
-
-    elif state.turn_type == "TurnInCards":
-        return 0
-
-    elif state.turn_type == "Attack":
-        return 0
-
-    elif state.turn_type == "Occupy":
-        return 0
-
-    elif state.turn_type == "Fortify":
-        return 0
-
+def get_territory(board, territory):
+    if type(territory) is int:
+        return territory
     else:
-        return 0
+        return board.territory_to_id[territory]
+
+def get_neighbors(board, territory):
+    return board.territories[get_territory(board, territory)].neighbors
+
+
+def get_target_continent(action, state):
+    return state.board.continents[get_continent_from_territory_ID(get_territory(state.board, action.to_territory))]
+
+
+def get_continent_from_territory_ID(territoryID):
+    if territoryID <= 8:
+        return "N. America"
+    elif 8 < territoryID <= 12:
+        return "S. America"
+    elif 12 < territoryID <= 18:
+        return "Africa"
+    elif 18 < territoryID <= 25:
+        return "Europe"
+    elif 25 < territoryID <= 37:
+        return "Asia"
+    else:
+        return "Australia"
 
 
 # Stuff below this is just to interface with Risk.pyw GUI version
