@@ -24,13 +24,13 @@ def getAction(state, time_left=None):
         if state.turn_type == "PreAssign":
             continent = get_target_continent(action, state)
             action_value += continent_scores[continent.name]
-            if action.to_territory in border_territories:
+            if get_territory(state.board, action.to_territory) in border_territories:
                 action_value += 1
 
         elif state.turn_type == "PrePlace":
             continent = get_target_continent(action, state)
             action_value += continent_scores[continent.name]
-            if action.to_territory in border_territories:
+            if get_territory(state.board, action.to_territory) in border_territories:
                 action_value += 1
 
         elif state.turn_type == "Place":
