@@ -8,7 +8,7 @@ def getAction(state, time_left=None):
     """This is the main AI function.  It should return a valid AI action for this state."""
 
     continent_scores = {"N. America": 0, "S. America": 3, "Africa": 0, "Europe": 0, "Asia": 0, "Australia": 3}
-    border_territories = [0, 2, 8, 9, 10, 16, 17, 19, 21, 24, 25, 26, 27, 28, 30, 37, 38]
+    border_territories = (0, 2, 8, 9, 10, 16, 17, 19, 21, 24, 25, 26, 27, 28, 30, 37, 38)
 
 
     # Get the possible actions in this state
@@ -49,10 +49,14 @@ def getAction(state, time_left=None):
                 action_value += getReinforcementNum(successor, state.current_player)
 
         elif state.turn_type == "Occupy":
-            pass
+            action_value += action.troops
 
         elif state.turn_type == "Fortify":
-            pass
+            if action.to_territory is None:
+                action_value -= 1
+            else:
+                if not all(state.owners[n] == state.current_player for n in get_neighbors(state.board, action.to_territory)):
+                    action_value += 1
 
         else:
             print("NOT A VALID STATE")
@@ -69,12 +73,14 @@ def get_territory(board, territory):
     else:
         return board.territory_to_id[territory]
 
+
 def get_neighbors(board, territory):
     return board.territories[get_territory(board, territory)].neighbors
 
 
 def get_target_continent(action, state):
     return state.board.continents[get_continent_from_territory_ID(get_territory(state.board, action.to_territory))]
+
 
 def get_continent_from_territory_ID(territoryID):
     if territoryID <= 8:
@@ -89,12 +95,6 @@ def get_continent_from_territory_ID(territoryID):
         return "Asia"
     else:
         return "Australia"
-
-def is_border_territory(board, territoryID):
-    # TODO
-    # Get neighboring territories
-    # Detect if any are in other continent
-    pass
 
 # Stuff below this is just to interface with Risk.pyw GUI version
 # DO NOT MODIFY
