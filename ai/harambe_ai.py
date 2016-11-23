@@ -6,7 +6,7 @@ def getAction(state, time_left=None):
     """This is the main AI function.  It should return a valid AI action for this state."""
     # Continent priority score list
     continent_scores = {"N. America": 0, "S. America": 3, "Africa": 0, "Europe": 0, "Asia": 0, "Australia": 3}
-    # Territories bordering multipled continents
+    # Territories bordering outside continents
     border_territories = (0, 2, 8, 9, 10, 16, 17, 19, 21, 24, 25, 26, 27, 28, 30, 37, 38)
 
     # Get the possible actions in this state
