@@ -9,10 +9,8 @@ def getAction(state, time_left=None):
 
     # Continent priority score list
     continent_scores = {"N. America": 0, "S. America": 3, "Africa": 0, "Europe": 0, "Asia": 0, "Australia": 3}
-    # Territory priority score list
     # Territories which border other continents have higher priority.
     border_territories = (0, 2, 8, 9, 10, 16, 17, 19, 21, 24, 25, 26, 27, 28, 30, 37, 38)
-
 
     # Get the possible actions in this state
     actions = getAllowedActions(state)
@@ -36,7 +34,6 @@ def getAction(state, time_left=None):
                 action_value += 1
             # If n-1 territories in the target continent are owned by someone other than the AI...
             enemyOwnedTerritories, unownedTerritories = 0
-            for territories in continent
 
             # Prioritize available territories within that continent
 
