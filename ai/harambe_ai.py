@@ -1,12 +1,9 @@
 from __future__ import print_function
-
 from risktools import *
 
 
-# This is the function implement to implement an AI. Then this AI will work with either the GUI or the play_risk_ai script.
 def getAction(state, time_left=None):
     """This is the main AI function.  It should return a valid AI action for this state."""
-
     # Continent priority score list
     continent_scores = {"N. America": 0, "S. America": 3, "Africa": 0, "Europe": 0, "Asia": 0, "Australia": 3}
     # Territories which border other continents have higher priority.
@@ -15,48 +12,61 @@ def getAction(state, time_left=None):
     # Get the possible actions in this state
     actions = getAllowedActions(state)
 
-    # To keep track of the best actions we find
+    # Store actions with their score so we can prioritize
     scored_actions = []
 
     # Evaluate each action
     for action in actions:
         action_value = 0.0
 
-        # In PreAssign, we want to find an available target continent with the highest continent score, then make the priority more granular by choosing a territory within that continent that borders another continent.
-        # Prioritize territories within border_territories list.
-        # Prioritize territories residing within continents that are close to being conquered by the enemy.
+        # In PreAssign, we prioritize continents nearly controlled by opponents, then our favorite continents, then border territories
         if state.turn_type == "PreAssign":
-            continent = get_target_continent(action, state)
             # Add continent priority score to action value
+            continent = get_target_continent(action, state)
             action_value += continent_scores[continent.name]
-            # If the territory is within the border_territories list.
+
+            # Prioritize border territories
             if get_territory(state.board, action.to_territory) in border_territories:
                 action_value += 1
-            # If n-1 territories in the target continent are owned by someone other than the AI...
-            enemyOwnedTerritories, unownedTerritories = 0
 
-            # Prioritize available territories within that continent
+            # Determine if continent is nearly controlled by an enemy
+            threat = True
+            min_ID, max_ID = get_territory_IDs_from_continent(continent)
+            owner = state.owners[min_ID]
+            empty_territories = 0
+            for t in range(min_ID + 1, max_ID + 1):
+                if state.owners[t] != owner:
+                    # If territory is not contolled
+                    if state.owners[t] is None:
+                        empty_territories += 1
+                    else:
+                        # Two or more players have territories here; no threat
+                        threat = False
+                        break
 
+            # Only a threat if single-player and nearly fully controlled
+            if threat and empty_territories <= len(state.players):
+                action_value += state.board.continents[continent.name].reward * 5
 
-        # In PrePlace, we do the same as what is done in PreAssign above.
+        # In PrePlace, prioritize only border territories
         elif state.turn_type == "PrePlace":
             continent = get_target_continent(action, state)
             action_value += continent_scores[continent.name]
+
             if get_territory(state.board, action.to_territory) in border_territories:
                 action_value += 1
 
-        # In Place, we want to be somewhat aggressive and place troops near enemy-owned territories.
+        # In Place, we want to be somewhat aggressive and place troops near enemy-owned territories
         elif state.turn_type == "Place":
             for neighbor in get_neighbors(state.board, action.to_territory):
                 if state.owners[neighbor] != state.owners[get_territory(state.board, action.to_territory)]:
                     action_value += 0.5
 
-        # Performs the default TurnInCards action.
+        # Performs the default TurnInCards action
         elif state.turn_type == "TurnInCards":
             pass
 
-        # Simulate attack actions and use heuristics to choose the action with the most desirable outcome.
-        # Prioritize enemy territories in which fewer other territories within the same continent are owned by that enemy.
+        # Prioritize enemy territories where fewer other territories within the same continent are owned by that enemy
         elif state.turn_type == "Attack":
             # Simulate the action, get all possible successors
             successors, probabilities = simulateAction(state, action)
@@ -84,23 +94,38 @@ def getAction(state, time_left=None):
     # Return the best action
     return max(scored_actions)[1]
 
-# Return the territory that an action would take place in
 def get_territory(board, territory):
+    """Return the territory that an action would take place in a given board"""
     if type(territory) is int:
         return territory
     else:
         return board.territory_to_id[territory]
 
-# Return the neighbors of a given territory.
 def get_neighbors(board, territory):
+    """Return the neighbors of a given territory in a given board"""
     return board.territories[get_territory(board, territory)].neighbors
 
-# Return the continent that a state would occur in, given some action such as occupying, fortifying, attacking, etc.
 def get_target_continent(action, state):
+    """Return the continent that an action would occur in, given a specifc action and state"""
     return state.board.continents[get_continent_from_territory_ID(get_territory(state.board, action.to_territory))]
 
-# Return the continent of a territory given the territory ID
+def get_player_controlling_continent(state, board, continent):
+    """Returns the player ID that controls a continent, or -1 if no player controls every territory in that continent"""
+    # Get territories in continent
+    min_ID, max_ID = get_territory_IDs_from_continent(continent)
+
+    # Check that all territories are owned by same player
+    owner = state.owners[min_ID]
+    for ID in range(min_ID + 1, max_ID + 1):
+        # If a territory is owned by another player
+        if state.owners[ID] != owner:
+            return -1
+
+    # Otherwise one player controls all territories
+    return owner
+
 def get_continent_from_territory_ID(territoryID):
+    """Return the label of the continent where the given territoryID is found"""
     if territoryID <= 8:
         return "N. America"
     elif 8 < territoryID <= 12:
@@ -114,22 +139,21 @@ def get_continent_from_territory_ID(territoryID):
     else:
         return "Australia"
 
-# Return the number of territories within the same continent as the given territory ID, and the upper territory ID of that continent
-# Can be used to iterate through territories in a continent
-def get_shared_territories_count_and_IDs_from_territory_ID(territoryID):
-    if territoryID <= 8:
-        return 8, 8
-    elif 8 < territoryID <= 12:
-        return 4, 12
-    elif 12 < territoryID <= 18:
-        return 6, 18
-    elif 18 < territoryID <= 25:
-        return 7, 25
-    elif 25 < territoryID <= 37:
-        return 12, 37
+def get_territory_IDs_from_continent(continent):
+    """Return (min_ID, max_ID) tuple of territory ID range in given continent"""
+    name = continent.name
+    if name == "N. America":
+        return (0, 8)
+    elif name == "S. America":
+        return (9, 12)
+    elif name == "Africa":
+        return (13, 18)
+    elif name == "Europe":
+        return (19, 25)
+    elif name == "Asia":
+        return (26, 37)
     else:
-        return 1, 38
-
+        return (38, 41)
 
 # Stuff below this is just to interface with Risk.pyw GUI version
 # DO NOT MODIFY
