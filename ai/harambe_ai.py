@@ -4,7 +4,7 @@ from risktools import *
 
 def getAction(state, time_left=None):
     """This is the main AI function.  It should return a valid AI action for this state."""
-    # Continent priority score list
+    # Continent priority scores
     continent_scores = {"N. America": 0, "S. America": 3, "Africa": 0, "Europe": 0, "Asia": 0, "Australia": 3}
     # Territories bordering outside continents
     border_territories = (0, 2, 8, 9, 10, 16, 17, 19, 21, 24, 25, 26, 27, 28, 30, 37, 38)
@@ -95,7 +95,7 @@ def getAction(state, time_left=None):
     return max(scored_actions)[1]
 
 def get_territory(board, territory):
-    """Return the territory that an action would take place in a given board"""
+    """Return the territory in which an action would take place in a given board"""
     if type(territory) is int:
         return territory
     else:
@@ -106,7 +106,7 @@ def get_neighbors(board, territory):
     return board.territories[get_territory(board, territory)].neighbors
 
 def get_target_continent(action, state):
-    """Return the continent that an action would occur in, given a specifc action and state"""
+    """Return the continent that an action would occur in, given a specific action and state"""
     return state.board.continents[get_continent_from_territory_ID(get_territory(state.board, action.to_territory))]
 
 def get_player_controlling_continent(state, board, continent):
