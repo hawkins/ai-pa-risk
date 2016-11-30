@@ -29,25 +29,6 @@ def getAction(state, time_left=None):
             if get_territory(state.board, action.to_territory) in border_territories:
                 action_value += 1
 
-            # Determine if continent is nearly controlled by an enemy
-            threat = True
-            min_ID, max_ID = get_territory_IDs_from_continent(continent)
-            owner = state.owners[min_ID]
-            empty_territories = 0
-            for t in range(min_ID + 1, max_ID + 1):
-                if state.owners[t] != owner:
-                    # If territory is not contolled
-                    if state.owners[t] is None:
-                        empty_territories += 1
-                    else:
-                        # Two or more players have territories here; no threat
-                        threat = False
-                        break
-
-            # Only a threat if single-player and nearly fully controlled
-            if threat and empty_territories <= len(state.players):
-                action_value += state.board.continents[continent.name].reward * 5
-
         # In PrePlace, prioritize only border territories
         elif state.turn_type == "PrePlace":
             continent = get_target_continent(action, state)
